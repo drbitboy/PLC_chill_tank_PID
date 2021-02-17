@@ -30,8 +30,9 @@ Model
   """
   ### Default model parameters
   default_Ke_per_h = 0.12     ### Exotherm-driven temperature rise, deg/h
-  default_CVe = 3.07          ### CV where heat flow is balanced
+  default_CVe = 3.07          ### CV where heat flow is balanced (-Ke)
   default_CVe0 = 0.95         ### CV valve is closed
+  default_CVexponent = 0.85   ### CV exponent for non-linear cooling(CV)
   default_kPV = 0.9992        ### PV decay toward Tt(ank), per second
   default_time_step = 1.00    ### Time step, seconds
   default_init_temp = 11.87   ### Temperature to look for to start model
@@ -45,6 +46,7 @@ Model
     self.Ke_per_h = float(keywords.get('Ke-per-h',self.default_Ke_per_h))
     self.CVe = float(keywords.get('CVe',self.default_CVe))
     self.CVe0 = float(keywords.get('CVe0',self.default_CVe0))
+    self.CVexponent = float(keywords.get('CVexponent',self.default_CVexponent))
     self.init_temp = float(keywords.get('init-temp',self.default_init_temp))
     self.init_CV = float(keywords.get('init-CV',self.default_init_CV))
     self.kPV = float(keywords.get('kPV',self.default_kPV))
@@ -80,7 +82,7 @@ Model
     return retAT,retTt,retPV
 
   def calculate_CVscalar(self,CV):
-    if CV > self.CVe0: return self.Ke * (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**0.85)
+    if CV > self.CVe0: return self.Ke * (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**self.CVexponent)
     return self.Ke
 
   def model_data(self,do_plot=None,short_circuit=False):
