@@ -6,7 +6,7 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 * Ti = 60
 * Td = 0
 
-![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/Kc50_T60_Td0.png)
+![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/Kc50_Ti60_Td0.png)
 
 ### Model with PID tuned as in actual results
 * Kc = 5 (too small)
