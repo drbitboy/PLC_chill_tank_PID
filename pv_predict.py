@@ -116,13 +116,13 @@ Model
       AT,pTt,pPV = self.model_one_timestep(AT,pTt,pPV,CVscalar)
 
     if self.do_plot if (None is do_plot) else do_plot:
-      title = '{0}\nKe={1}deg/h kPV={2} CVe0={3} CVe={4} dt={5}'.format(
+      title = '{0}\nKe={1}deg/h kPV={2} CVe0={3} CVe={4} CVexp={5}'.format(
               os.path.basename(self.path)
               ,self.Ke_per_h
               ,self.kPV
               ,self.CVe0
               ,self.CVe
-              ,self.time_step
+              ,self.CVexponent
               )
       self.plot_data(pATs,None,pPVs,pTts,title)
 
