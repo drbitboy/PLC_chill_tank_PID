@@ -204,9 +204,8 @@ Model
       AT,xTt,xPV = self.model_one_timestep(AT,xTt,xPV,CVscalar)
 
     if self.do_plot if (None is do_plot) else do_plot:
-      title = '{0}\nKe={1}deg/h kPV={2} CVe0={3} CVe={4} CVexp={5}'.format(
-              os.path.basename(self.path)
-              ,self.Ke_per_h
+      title = 'Ke={0}deg/h kPV={1} CVe0={2} CVe={3} CVexp={4}'.format(
+              self.Ke_per_h
               ,self.kPV
               ,self.CVe0
               ,self.CVe
@@ -236,7 +235,6 @@ def process_args(argv):
 
 if "__main__" == __name__:
   args,keywords = process_args(sys.argv[1:])
-  print(keywords)
   cet = CET(*args,**keywords)
   if not ('no-model-data' in keywords):
     cet.model_data()
