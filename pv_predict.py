@@ -10,7 +10,7 @@ do_warn = 'WARN' in os.environ
 class CET:  ### Chilled Exothermic Tank
   """
 Model temperature of PV sensor in tank with exothermic media and cooled
-via jacket circulating chilled glycol 
+via jacket circulating chilled glycol
 
 Model
 
@@ -41,7 +41,7 @@ Model
   def __init__(self,*args,**keywords):
     """Initialize model parameters, read model data"""
 
-    ### Model parameters
+    ### Model parameter inputs
     self.Ke_per_h = float(keywords.get('Ke-per-h',self.default_Ke_per_h))
     self.CVe = float(keywords.get('CVe',self.default_CVe))
     self.CVe0 = float(keywords.get('CVe0',self.default_CVe0))
@@ -64,19 +64,26 @@ Model
         if do_warn:
           sys.stderr.write('WARNING:  ignoring unknown argument [{0}]\n'.format(arg))
 
-  def model_one_step(self,AT,Tt,PV,CVscalar,Ke,kPV_step):
+    self.calculate_per_timestep_parameters()
+
+  def calculate_per_timestep_parameters(self):
+    ### Convert model parameter inputs to per-timestep values
+    ### - .Ke - temperature rise per timestep, exotherm-only, no cooling
+    ### - .kPV_step - per-timestep PV decay, (PVn-Tt)/(PV<n-1>-Tt)
+    self.Ke = self.Ke_per_h * self.time_step / 3600.0
+    self.kPV_step = self.kPV**self.time_step
+
+  def model_one_timestep(self,AT,Tt,PV,CVscalar):
     retTt = Tt + CVscalar
-    retPV = retTt + ((PV - retTt) * kPV_step) + Ke
+    retPV = retTt + ((PV - retTt) * self.kPV_step) + self.Ke
     retAT = AT + self.time_step
     return retAT,retTt,retPV
 
-  def run_data(self,do_plot=None,short_circuit=False):
+  def calculate_CVscalar(self,CV):
+    if CV > self.CVe0: return self.Ke * (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**0.85)
+    return self.Ke
 
-    ### Convert model parameters to per-timestep
-    ### - Ke - exotherm-driven temperature rise per timestep
-    ### - kPV_step - decay of PV toward Tt, per timestep
-    Ke = self.Ke_per_h * self.time_step / 3600.0
-    kPV_step = self.kPV**self.time_step
+  def model_data(self,do_plot=None,short_circuit=False):
 
     ### Select start point from raw data
     i0 = np.where(np.bitwise_and(self.cvs==self.init_CV,self.pvs==self.init_temp))[0][0]-1
@@ -87,8 +94,11 @@ Model
     ### Create predicted data arrays
     L = len(pATs)
     pPVs,pTts = np.zeros(L),np.zeros(L)
-    pPV = self.init_temp
-    pTt = pPV - (Ke / (1.0 - kPV_step))
+
+    ### Get Present Value from model
+    pPV = self.pvs[i0:i0+2].mean()
+    ### Assuming pPV is steady at one value
+    pTt = pPV - (self.Ke / (1.0 - self.kPV_step))
 
     ### Initialize model
     AT,inext = pATs[0],0
@@ -97,14 +107,11 @@ Model
       if AT>=pATs[inext]:
         CV = pCVs[inext]
         pPVs[inext],pTts[inext] = pPV,pTt
-        if CV > self.CVe0:
-          CVscalar = Ke * (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**0.85)
-        else:
-          CVscalar = Ke
+        CVscalar = self.calculate_CVscalar(CV)
         inext += 1
         if inext==L: break
 
-      AT,pTt,pPV = self.model_one_step(AT,pTt,pPV,CVscalar,Ke,kPV_step)
+      AT,pTt,pPV = self.model_one_timestep(AT,pTt,pPV,CVscalar)
 
     if self.do_plot if (None is do_plot) else do_plot:
       title = '{0}\nKe={1}deg/h kPV={2} CVe0={3} CVe={4} dt={5}'.format(
@@ -142,7 +149,7 @@ Model
 
     plt.show()
 
-  def run_model_with_pid(self,pid):
+  def model_with_pid(self,pid):
     pass
 
 def process_args(argv):
@@ -159,4 +166,4 @@ def process_args(argv):
 
 if "__main__" == __name__:
   args,keywords = process_args(sys.argv[1:])
-  cet = CET(*args,**keywords).run_data()
+  cet = CET(*args,**keywords).model_data()
