@@ -118,7 +118,10 @@ Model
   def plot_data(self,ATs,PVs,Tts,title):
     import matplotlib.pyplot as plt
 
-    fig,(pvplt,cvplt) = plt.subplots(nrows=2,ncols=1,sharex=True)
+    fig,(pvplt,cvplt) = plt.subplots(nrows=2,ncols=1
+                                    ,sharex=True
+                                    ,gridspec_kw=dict(height_ratios=[3,1])
+                                    )
 
     pvplt.axhline(12.0,label='SP',linewidth=0.5,linestyle='dotted')
     pvplt.plot(self.ats,self.pvs,label='PV Data')
