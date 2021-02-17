@@ -64,7 +64,13 @@ Model
         if do_warn:
           sys.stderr.write('WARNING:  ignoring unknown argument [{0}]\n'.format(arg))
 
-  def run_data(self,do_plot=None):
+  def model_one_step(self,AT,Tt,PV,CVscalar,Ke,kPV_step):
+    retTt = Tt + CVscalar
+    retPV = retTt + ((PV - retTt) * kPV_step) + Ke
+    retAT = AT + self.time_step
+    return retAT,retTt,retPV
+
+  def run_data(self,do_plot=None,short_circuit=False):
 
     ### Convert model parameters to per-timestep
     ### - Ke - exotherm-driven temperature rise per timestep
@@ -92,17 +98,13 @@ Model
         CV = pCVs[inext]
         pPVs[inext],pTts[inext] = pPV,pTt
         if CV > self.CVe0:
-          CVscalar = (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**0.85)
+          CVscalar = Ke * (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**0.85)
         else:
-          CVscalar = 1.0
+          CVscalar = Ke
         inext += 1
         if inext==L: break
 
-      pTt += CVscalar * Ke
-      pPV = pTt + ((pPV - pTt) * kPV_step) + Ke
-
-      ### Next time
-      AT += self.time_step
+      AT,pTt,pPV = self.model_one_step(AT,pTt,pPV,CVscalar,Ke,kPV_step)
 
     if self.do_plot if (None is do_plot) else do_plot:
       title = '{0}\nKe={1}deg/h kPV={2} CVe0={3} CVe={4} dt={5}'.format(
@@ -113,9 +115,9 @@ Model
               ,self.CVe
               ,self.time_step
               )
-      self.plot_data(pATs,pPVs,pTts,title)
+      self.plot_data(pATs,None,pPVs,pTts,title)
 
-  def plot_data(self,ATs,PVs,Tts,title):
+  def plot_data(self,ATs,CVs,PVs,Tts,title):
     import matplotlib.pyplot as plt
 
     fig,(pvplt,cvplt) = plt.subplots(nrows=2,ncols=1
@@ -131,11 +133,17 @@ Model
     pvplt.legend()
     pvplt.set_title(title)
 
-    cvplt.plot(self.ats,self.cvs,label='CV Data',linewidth=0.5)
-    cvplt.set_ylabel('PID CV out, %')
+    if None is CVs:
+      cvplt.plot(self.ats,self.cvs,linewidth=0.5)
+    else:
+      cvplt.plot(ATs,CVs,linewidth=0.5)
+    cvplt.set_ylabel('CV, %')
     cvplt.set_xlabel('Time, s')
 
     plt.show()
+
+  def run_model_with_pid(self,pid):
+    pass
 
 def process_args(argv):
   args,keywords = list(),dict()
