@@ -9,8 +9,8 @@ Model with tuned PID, per @Mispeld
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/Kc50_Ti60_Td0.png)
 
-Model with PID tuned as in actual results
 ====
+Model with PID tuned as in actual results
 * Kc = 5 (too small)
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
