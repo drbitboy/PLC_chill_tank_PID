@@ -29,3 +29,5 @@ Model
 ====
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/slow_pide_model.png)
+
+![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/modeling.png)
