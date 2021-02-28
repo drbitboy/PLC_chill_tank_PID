@@ -33,10 +33,11 @@ Model
   """
   ### Default model parameters
   default_Ke_per_h = 0.12     ### Exotherm-driven temperature rise, deg/h
-  default_CVe = 3.07          ### CV where heat flow is balanced (-Ke)
-  default_CVe0 = 0.95         ### CV valve is closed
+  default_CVe = 3.6           ### CV where heat flow is balanced (-Ke)
+  default_CVe0 = 0.9          ### CV valve is closed
+  default_CVe_Ke_frac = 1.    ### fraction of Ke at CV=CVe
   default_CVexponent = 0.85   ### CV exponent for non-linear cooling(CV)
-  default_kPV = 0.9992        ### PV decay toward Tt(ank), per second
+  default_kPV = 0.997         ### PV decay toward Tt(ank), per second
   default_time_step = 1.00    ### Time step, seconds
   default_init_temp = 11.87   ### Temperature to look for to start model
   default_init_CV = 0.0       ### CV to look for to start model
@@ -60,6 +61,7 @@ Model
     self.Ke_per_h = float(keywords.get('Ke-per-h',self.default_Ke_per_h))
     self.CVe = float(keywords.get('CVe',self.default_CVe))
     self.CVe0 = float(keywords.get('CVe0',self.default_CVe0))
+    self.CVe_Ke_frac = float(keywords.get('CVe0-Ke-frac',self.default_CVe_Ke_frac))
     self.CVexponent = float(keywords.get('CVexponent',self.default_CVexponent))
     self.init_temp = float(keywords.get('init-temp',self.default_init_temp))
     self.init_CV = float(keywords.get('init-CV',self.default_init_CV))
@@ -104,8 +106,15 @@ Model
     return retAT,retTt,retPV
 
   def calculate_CVscalar(self,CV):
-    if CV > self.CVe0: return self.Ke * (1.0 - ((CV - self.CVe0) / (self.CVe - self.CVe0))**self.CVexponent)
+    if CV > self.CVe0: return self.Ke * (1.0 - (self.CVe_Ke_frac * ((CV - self.CVe0) / (self.CVe - self.CVe0))**self.CVexponent))
     return self.Ke
+
+  def xCV_to_CV(self,xCV,lastblCV):
+    rounded0_CV = round(xCV,0)
+    if rounded0_CV > lastblCV: blCV = rounded0_CV
+    elif rounded0_CV <= 0.0  : blCV = 0.0
+    else                     : blCV = lastblCV
+    return blCV,rounded0_CV,xCV,self.calculate_CVscalar(blCV)
 
   def model_data(self,do_plot=None):
 
@@ -117,7 +126,7 @@ Model
 
     ### Create predicted data arrays
     L = len(pATs)
-    pPVs,pTts = npzs(L),npzs(L)
+    pPVs,pTts,pblCVs = npzs(L),npzs(L),npzs(L)
 
     ### Get Present Value from model
     pPV = self.pvs[i0:i0+2].mean()
@@ -125,30 +134,54 @@ Model
     pTt = pPV - (self.Ke / (1.0 - self.kPV_step))
 
     ### Initialize model
-    AT,inext = pATs[0],0
+    AT,inext,blCV = pATs[0],0,-1e32
 
     while True:
       if AT>=pATs[inext]:
-        CV = pCVs[inext]
-        pPVs[inext],pTts[inext] = pPV,pTt
-        CVscalar = self.calculate_CVscalar(CV)
+        blCV,rCV,xCV,CVscalar = self.xCV_to_CV(pCVs[inext],blCV)
+        pPVs[inext],pTts[inext],pblCVs[inext] = pPV,pTt,blCV
         inext += 1
         if inext>=L: break
 
       AT,pTt,pPV = self.model_one_timestep(AT,pTt,pPV,CVscalar)
 
     if self.do_plot if (None is do_plot) else do_plot:
-      title = '{0}\nKe={1}deg/h kPV={2} CVe0={3} CVe={4} CVexp={5}'.format(
-              os.path.basename(self.path)
-              ,self.Ke_per_h
-              ,self.kPV
-              ,self.CVe0
-              ,self.CVe
-              ,self.CVexponent
-              )
-      self.plot_data(pATs,None,pPVs,pTts,title,cvtitle=None)
+      pvtitle = '{0}\nKe={1}deg/h kPV={2} CVe0/CVe/CVexp/KeFrac@CVe={3}/{4}/{5}/{6}'.format(
+                os.path.basename(self.path)
+                ,self.Ke_per_h
+                ,self.kPV
+                ,self.CVe0
+                ,self.CVe
+                ,self.CVexponent
+                ,self.CVe_Ke_frac
+                )
+      #self.plot_data(pATs,None,pPVs,pTts,title,cvtitle=None)
+      self.plot_data((self.ats,'CV',None,((self.cvs,'CV data',)
+                                         ,)
+                     ,)
+                    ,(pATs,'CV',None,((pblCVs,'Backlash CV',)
+                                     ,)
+                     ,)
+                    ,(self.ats,'PV',None,((self.pvs,'PV Data',)
+                                         ,)
+                     ,)
+                    ,(pATs,'PV',pvtitle,((pTts,'Tank Predict',)
+                                        ,(pPVs,'PV Predict',)
+                                        ,)
+                     ,)
+                    )
+    #if None is CVs:
+    #  pvplt.plot(self.ats,self.pvs,label='PV Data')
+    #pvplt.plot(ATs,PVs,label='PV Predict')
+    #pvplt.plot(ATs,Tts,label='Tank Predict')
 
-  def plot_data(self,ATs,CVs,PVs,Tts,title,cvtitle=None):
+    #if None is CVs:
+    #  cvplt.plot(self.ats,self.cvs,linewidth=0.5)
+    #else:
+    #  cvplt.plot(ATs,CVs,linewidth=0.5)
+
+  def plot_datax(self,ATs,CVs,PVs,Tts,title,cvtitle=None):pass
+  def plot_data(self,*args):
     import matplotlib.pyplot as plt
 
     fig,(pvplt,cvplt) = plt.subplots(nrows=2,ncols=1
@@ -157,30 +190,40 @@ Model
                                     )
 
     pvplt.axhline(12.0,label='SP',linewidth=0.5,linestyle='dotted')
-    if None is CVs:
-      pvplt.plot(self.ats,self.pvs,label='PV Data')
-    pvplt.plot(ATs,PVs,label='PV Predict')
-    pvplt.plot(ATs,Tts,label='Tank Predict')
     pvplt.set_ylabel('Temperature, degC')
-    pvplt.legend()
-    pvplt.set_title(title)
-
-    if None is CVs:
-      cvplt.plot(self.ats,self.cvs,linewidth=0.5)
-    else:
-      cvplt.plot(ATs,CVs,linewidth=0.5)
+    #pvplt.set_title(title)
     cvplt.set_ylabel('CV, %')
     cvplt.set_xlabel('Time, s')
-    if isinstance(cvtitle,str): cvplt.set_title(cvtitle)
+
+    for ats,whichplot,xvtitle,xvpairs in args:
+      xvplt = 'CV' == whichplot and cvplt or pvplt
+      if isinstance(xvtitle,str): xvplt.set_title(xvtitle)
+      for xvs,xvlegend in xvpairs:
+        sys.stdout.flush()
+        xvplt.plot(ats,xvs,label=xvlegend)
+      xvplt.legend(loc='best')
+
+    #if None is CVs:
+    #  pvplt.plot(self.ats,self.pvs,label='PV Data')
+    #pvplt.plot(ATs,PVs,label='PV Predict')
+    #pvplt.plot(ATs,Tts,label='Tank Predict')
+
+    #if None is CVs:
+    #  cvplt.plot(self.ats,self.cvs,linewidth=0.5)
+    #else:
+    #  cvplt.plot(ATs,CVs,linewidth=0.5)
+
+    #if isinstance(cvtitle,str): cvplt.set_title(cvtitle)
 
     plt.show()
 
   def model_with_pid(self,keywords,do_plot=None):
     L = int(math.ceil(self.pid_duration / self.pid_updatetime))
-    ATs,rPVs,xTts,rCVs = npzs(L),npzs(L),npzs(L),npzs(L)
+    (ATs,rPVs,xTts,rCVs,blCVs,xCVs
+    ,) = npzs(L),npzs(L),npzs(L),npzs(L),npzs(L),npzs(L)
     AT,xPV,xTt,xCV = 0.0,11.80,11.80,0.0
 
-    nextPIDAT,inext,lastrCV = 0.0,0,-1e32
+    nextPIDAT,inext,blCV = 0.0,0,-1e32
 
     ctlpid = pid.PID(self.pid_Kc,self.pid_Ti,self.pid_Td
                     ,CVlast=xCV
@@ -193,10 +236,19 @@ Model
 
       if AT >= nextPIDAT:
         xCV = ctlpid.control(rPV,self.pid_setpoint)
+        blCV,rCV,xCV,CVscalar = self.xCV_to_CV(xCV,blCV)
+        """
+        xCV = ctlpid.control(rPV,self.pid_setpoint)
         rCV = round(xCV,0)
-        if rCV != lastrCV: CVscalar = self.calculate_CVscalar(rCV)
-
-        ATs[inext],rPVs[inext],xTts[inext],rCVs[inext] = AT,rPV,xTt,rCV
+        if rCV > blCV  : blCV = rCV
+        elif rCV <= 0.0: blCV = 0.0
+        if blCV != lxastblCV:
+          CVscalar = self.calculate_CVscalar(blCV)
+          lxastblCV = blCV
+        """
+        (ATs[inext],rPVs[inext],xTts[inext]
+        ,rCVs[inext],xCVs[inext],blCVs[inext]
+        ,) = AT,rPV,xTt,rCV,xCV,blCV
         inext += 1
         if inext >= L: break
         nextPIDAT = AT + self.pid_updatetime
@@ -204,13 +256,13 @@ Model
       AT,xTt,xPV = self.model_one_timestep(AT,xTt,xPV,CVscalar)
 
     if self.do_plot if (None is do_plot) else do_plot:
-      title = 'Ke={0}deg/h kPV={1} CVe0={2} CVe={3} CVexp={4}'.format(
-              self.Ke_per_h
-              ,self.kPV
-              ,self.CVe0
-              ,self.CVe
-              ,self.CVexponent
-              )
+      pvtitle = 'Ke={0}deg/h kPV={1} CVe0={2} CVe={3} CVexp={4}'.format(
+                self.Ke_per_h
+                ,self.kPV
+                ,self.CVe0
+                ,self.CVe
+                ,self.CVexponent
+                )
       cvtitle = 'Kc={0} Ti={1}min Td={2}min Update={3}s'.format(
                 self.pid_Kc
                 ,self.pid_Ti
@@ -218,7 +270,15 @@ Model
                 ,self.pid_updatetime
                 #,self.pid_deadband
                 )
-      self.plot_data(ATs,rCVs,rPVs,xTts,title,cvtitle=cvtitle)
+      self.plot_data((ATs,'CV',cvtitle,((rCVs,'Rounded CV',)
+                                       ,(blCVs,'Backlash CV',)
+                                       ,)
+                     ,)
+                    ,(ATs,'PV',pvtitle,((xTts,'Tank Predict',)
+                                       ,(rPVs,'PV Predict',)
+                                       ,)
+                     ,)
+                    )
 
 
 def process_args(argv):
