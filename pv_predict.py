@@ -111,10 +111,13 @@ Model
 
   def xCV_to_CV(self,xCV,lastblCV):
     rounded0_CV = round(xCV,0)
-    if rounded0_CV > lastblCV: blCV = rounded0_CV
+    backlash = False
+    if rounded0_CV >= lastblCV: blCV = rounded0_CV
     elif rounded0_CV <= 0.0  : blCV = 0.0
-    else                     : blCV = lastblCV
-    return blCV,rounded0_CV,xCV,self.calculate_CVscalar(blCV)
+    else                     :
+      blCV = lastblCV
+      backlash = True
+    return blCV,rounded0_CV,xCV,self.calculate_CVscalar(blCV),backlash
 
   def model_data(self,do_plot=None):
 
@@ -138,7 +141,7 @@ Model
 
     while True:
       if AT>=pATs[inext]:
-        blCV,rCV,xCV,CVscalar = self.xCV_to_CV(pCVs[inext],blCV)
+        blCV,rCV,xCV,CVscalar,backlash = self.xCV_to_CV(pCVs[inext],blCV)
         pPVs[inext],pTts[inext],pblCVs[inext] = pPV,pTt,blCV
         inext += 1
         if inext>=L: break
@@ -236,7 +239,7 @@ Model
 
       if AT >= nextPIDAT:
         xCV = ctlpid.control(rPV,self.pid_setpoint)
-        blCV,rCV,xCV,CVscalar = self.xCV_to_CV(xCV,blCV)
+        blCV,rCV,xCV,CVscalar,backlash = self.xCV_to_CV(xCV,blCV)
         """
         xCV = ctlpid.control(rPV,self.pid_setpoint)
         rCV = round(xCV,0)
@@ -252,6 +255,13 @@ Model
         inext += 1
         if inext >= L: break
         nextPIDAT = AT + self.pid_updatetime
+
+        blrem = backlash and 3 or 0
+
+      if blrem > 0:
+        blrem -= 1
+        if blrem: blCV,rCVtmp,xCVtmp,CVscalar,backlashtmp = self.xCV_to_CV(0.0,0.0)
+        else    : blCV,rCVtmp,xCVtmp,CVscalar,backlashtmp = self.xCV_to_CV(xCV,blCV)
 
       AT,xTt,xPV = self.model_one_timestep(AT,xTt,xPV,CVscalar)
 
