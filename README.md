@@ -3,7 +3,7 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 
 * Backlash modeled as actual valve position never decreasing unless whole-percentage-rounded, post-processed PID CV output position is 0% (valve closed)
 
-Model with tuned PID, per @Mispeld, with anti-backlash post-processing of PID CV output before sending signal to valve
+Model with tuned PID, per @Mispeld, with anti-backlash
 ====
 * Kc = 50
 * Ti = 60
