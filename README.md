@@ -7,7 +7,7 @@ Model with tuned PID, per @Mispeld
 * Ti = 60
 * Td = 0
 
-![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/Kc50_Ti60_Td0.png)
+![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/anti_backlash_pid_050_060_000.png)
 
 Model with PID tuned as in actual results
 ====
@@ -15,7 +15,7 @@ Model with PID tuned as in actual results
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
 
-![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/Kc5_Ti8_Td1.5.png)
+![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/backlash_model_pid_20210228.png)
 
 Actual results with PID tuned for cycling
 ====
@@ -23,7 +23,7 @@ Actual results with PID tuned for cycling
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
 
-![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/model_20210217.png)
+![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/backlash_model_data_20210228.png)
 
 Model
 ====
