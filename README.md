@@ -3,6 +3,13 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 
 * CV-to-control valve position backlash modeled as actual valve position never decreasing unless whole-percentage-rounded, post-processed PID CV output position is 0% (valve closed; 4ma)
 
+# Quickstart usage
+
+    python pv_predict.py 
+    python pv_predict.py  --pid-Kc=50 --pid-Ti=60 --pid-Td=0 --fix-backlash --no-model-data
+
+# Results
+
 Model with tuned PID, per @Mispeld, and backlash model with anti-backlash action for modeled valve position
 ====
 * Kc = 50
@@ -42,7 +49,9 @@ Model
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/modeling.png)
 
-Manifest
+#Manifest
+
+./
 ====
 
 pv_predict.py - run process model against input PID CV value
