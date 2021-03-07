@@ -86,3 +86,11 @@ images/slow_pide_model.* - sketch of fluid level as a proxy for chilled tank tem
 images/modeling.* - modeling equations
 
 images/Kc50_Ti120_Td0.png - PID modeling with @GrizzlyC's later tuning; not used in README.md
+
+Python pre-requisites (Debian/Ubuntu naming)
+====
+
+* python-numpy
+* python-pandas
+* python-matplotlib
+* python-scipy (for SmithPredictor)
