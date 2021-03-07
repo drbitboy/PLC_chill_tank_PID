@@ -7,7 +7,9 @@ Delta Computer Systems, Inc.
 
 @modified:  Brian T. Carcich
 Latchmoor Services, INC
+Ca. 2021-03-07
 """
+import os
 import sys
 from math import sqrt
 import numpy as np
@@ -46,7 +48,7 @@ p[4]:  deadtime
     return _sse
 
 
-def plot_data(aTimes, aPV, aEV, aCO):
+def plot_data(aTimes, aPV, aEV, aCO,title):
     """ plot the SOPDT response
         aTimes is the array of time values at which PV and CO data was taken
         aPV is the array of provided process variable
@@ -61,8 +63,8 @@ def plot_data(aTimes, aPV, aEV, aCO):
                       'c-', label='process variable')
     _line1, = _ax0.plot(aTimes, aEV,
                       'r--', label='estimated value')
-    _ax0.set_title('Process and Estimated Values vs Time')
-    _ax0.set_ylabel('process and estimated values')
+    _ax0.set_title(title)
+    _ax0.set_ylabel('process & estimated values')
 
     _line2, = _axCO.plot(aTimes, aCO ,'g-',label='control %')
     _axCO.set_ylabel('control %')
@@ -118,7 +120,9 @@ def go_main(method='Nelder-Mead',path='Hotrod.txt',pv0=Hotrod_pv0):
     # initial process value and rate of change
     pv1 = [aPV[0], (aPV[1]-aPV[0])/(aTime[1]-aTime[0])]
     aEV = odeint(difeq, pv1, aTime, args=(k, t0, t1, c, dt ))
-    plot_data(aTime, aPV, aEV[:,0], aCO)
+    plot_data(aTime, aPV, aEV[:,0], aCO
+             , '{0}\n{1}'.format(os.path.basename(path),','.join(map('{0:.3e}'.format,res.x)))
+             )
     print("RMS error          = {:7.3f}".format(sqrt(res.fun/len(aTime))))
     print("The open loop gain = {:7.3f} PV/%CO".format(res.x[0]))
     print("Time constant 0    = {:7.3f}".format(res.x[1]))
