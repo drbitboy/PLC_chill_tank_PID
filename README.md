@@ -41,3 +41,48 @@ Model
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/slow_pide_model.png)
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/modeling.png)
+
+Manifest
+====
+
+pv_predict.py - run process model against input PID CV value
+
+pid.py - PID module, used by pv_predict.py
+
+read_interleaved_XLSX.py - script to read data from Tank*.xlsx
+
+Tank_20_Results_Feb_11-12_2021_R1.xlsx - one day of data from chill tank
+
+.gitignore - list of files for Git to ignore
+
+README.md - this file
+
+SmithPredictor/ - Smith Predictor code, modified from Peter Nachtwey's ZIP
+====
+
+SmithPredictor/SysID_SOPDT.py - main script to optimize 5-parameter model to data
+
+SmithPredictor/Hotrod.txt - default Tab-Separated Values (TSV) original data for Smith Predictor
+
+SmithPredictor/Tank_data_dbacklash.txt - TSV version of ../Tank*.xlsx data, with backlashed valve positions from PID CV data
+
+SmithPredictor/readCSV.py - script to read TSV data
+
+SmithPredictor/Chiller_result.png - Smith Predictor optimization result, using backlashed valve positions
+
+SmithPredictor/original/SysID_SOPDT.zip - Peter's original ZIP, without hotrod.png
+
+images/ - Images used in top-level README.md
+====
+
+images/anti_backlash_pid_050_060_000.png - tuned PID modeling
+
+images/backlash_model_pid_20210307.png - PID modeling using actual tuning paramaters
+
+images/backlash_model_data_20210307.png - process modeling based on backlashed valve positions
+
+images/slow_pide_model.* - sketch of fluid level as a proxy for chilled tank temperature
+
+images/modeling.* - modeling equations
+
+images/Kc50_Ti120_Td0.png - PID modeling with @GrizzlyC's later tuning; not used in README.md
