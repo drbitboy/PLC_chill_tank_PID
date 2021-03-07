@@ -19,7 +19,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-def read_XLSX(path,zero_to_20=False):
+def read_XLSX(path,zero_to_20=False,decreasing_backlash=False):
   """
   Reads the eXcel file designated by path
   The data must be in the second worksheet (sheet_name==1)
@@ -54,6 +54,14 @@ def read_XLSX(path,zero_to_20=False):
   aTimes = aTimes.flatten()
   CVs = rawarr[iw_cv,1].flatten()
   PVs = np.round(rawarr[iw_pv,1].flatten(),3)
+  ### Model backlash
+  L = len(CVs)
+  lastCV = -1e32
+  if decreasing_backlash:
+    ### Ensure CV never decreases unless new value is 0
+    for i in range(L):
+      if CVs[i] > lastCV or CVs[i] == 0.0: lastCV = CVs[i]
+      elif CVs[i] < lastCV               : CVs[i] = lastCV
   ### Check if --zero-to-20 fix is needed
   if zero_to_20:
     ### Control valve is opened from 0% to 7ma out of 4-20ma i.e. 3/16
@@ -67,15 +75,13 @@ def read_XLSX(path,zero_to_20=False):
   return aTimes[iw],CVs[iw],PVs[iw]
 
 ########################################################################
-def massage_XLSX(path,zero_to_20=False):
+def massage_XLSX(path,zero_to_20=False,decreasing_backlash=False):
   """
   Read data using read_XLSX above; remove PVs of zero; merge sections of
   contiguous duplicate data
 
   """
-  aTimes,CVs,PVs = triple= read_XLSX(path,zero_to_20=zero_to_20)
-  iw = np.where(PVs>0.0)
-  sumt = [0.0]*3
+  aTimes,CVs,PVs = triple= read_XLSX(path,zero_to_20=zero_to_20,decreasing_backlash=decreasing_backlash)
   lastPV,lastCV,firsti,n = -1e32,-1e32,0,0
   for i in range(len(aTimes)):
 
@@ -108,19 +114,21 @@ if "__main__" == __name__:
   The path must point to the file you want to read.
 
   Usage:  python read_interleaved_XLSX.py
-          python read_interleaved_XLSX.py ['Tank_20_Results_Feb_11-12_2021_R1.xlsx'] [--convert-to-tsv[ > Tank_data.txt]]
-          python read_interleaved_XLSX.py 'Tank....xlsx' [--convert-to-tsv --massage-tank-data[ > Tank_data_massage.txt]]
+          python read_interleaved_XLSX.py [Tank_20_Results_Feb_11-12_2021_R1.xlsx] [--convert-to-tsv[ > Tank_data.txt]]
+          python read_interleaved_XLSX.py Tank....xlsx [--massage-tank-data[ --convert-to-tsv  > Tank_data_massage.txt]]
+          python read_interleaved_XLSX.py Tank....xlsx [--decreasing-backlash[ --convert-to-tsv > Tank_data_dbacklash.txt]]
 
           N.B. [...] means ... is optional argument(s)
   """
   path = ([s for s in sys.argv[1:] if not s.startswith('--')] + ['Tank_20_Results_Feb_11-12_2021_R1.xlsx'])[0]
   zero_to_20 = '--zero-to-20' in sys.argv[1:]
+  decreasing_backlash = '--decreasing-backlash' in sys.argv[1:]
 
   if '--massage-tank-data' in sys.argv[1:]:
-    aTimes,CVs,PVs = massage_XLSX(path,zero_to_20=zero_to_20)
+    aTimes,CVs,PVs = massage_XLSX(path,zero_to_20=zero_to_20,decreasing_backlash=decreasing_backlash)
     sys.stderr.write('Method [massage_XLSX] successfully massaged {1} data from file [{0}]\n'.format(path,len(aTimes)))
   else:
-    aTimes,CVs,PVs = read_XLSX(path,zero_to_20=zero_to_20)
+    aTimes,CVs,PVs = read_XLSX(path,zero_to_20=zero_to_20,decreasing_backlash=decreasing_backlash)
     sys.stderr.write('Method [read_XLSX] successfully read {1} data from file [{0}]\n'.format(path,len(aTimes)))
 
   if '--convert-to-tsv' in sys.argv[1:]:

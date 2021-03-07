@@ -183,7 +183,6 @@ Model
     #else:
     #  cvplt.plot(ATs,CVs,linewidth=0.5)
 
-  def plot_datax(self,ATs,CVs,PVs,Tts,title,cvtitle=None):pass
   def plot_data(self,*args):
     import matplotlib.pyplot as plt
 
@@ -199,12 +198,18 @@ Model
     cvplt.set_xlabel('Time, s')
 
     for ats,whichplot,xvtitle,xvpairs in args:
-      xvplt = 'CV' == whichplot and cvplt or pvplt
+      xvplt = whichplot.startswith('CV') and cvplt or pvplt
+      markerline = whichplot.endswith('dots') and '.' or '-'
       if isinstance(xvtitle,str): xvplt.set_title(xvtitle)
       for xvs,xvlegend in xvpairs:
         sys.stdout.flush()
-        xvplt.plot(ats,xvs,label=xvlegend)
-      xvplt.legend(loc='best')
+        xvplt.plot(ats,xvs
+                  ,markerline
+                  ,label=xvlegend
+                  ,linewidth='Backlash CV' == xvlegend and 0.5 or None
+                  ,markersize=0.5
+                  )
+      xvplt.legend(loc=xvplt is cvplt and 'center right' or 'best')
 
     #if None is CVs:
     #  pvplt.plot(self.ats,self.pvs,label='PV Data')
@@ -234,6 +239,8 @@ Model
                     ,Deadband=self.pid_deadband
                     )
 
+    zeroCV_ATs = list()
+
     while True:
       rPV = round(xPV,2)
 
@@ -256,11 +263,13 @@ Model
         if inext >= L: break
         nextPIDAT = AT + self.pid_updatetime
 
-        blrem = backlash and 3 or 0
+        blrem = ('fix-backlash' in keywords) and backlash and 3 or 0
 
       if blrem > 0:
         blrem -= 1
-        if blrem: blCV,rCVtmp,xCVtmp,CVscalar,backlashtmp = self.xCV_to_CV(0.0,0.0)
+        if blrem:
+          blCV,rCVtmp,xCVtmp,CVscalar,backlashtmp = self.xCV_to_CV(0.0,0.0)
+          zeroCV_ATs.append(AT)
         else    : blCV,rCVtmp,xCVtmp,CVscalar,backlashtmp = self.xCV_to_CV(xCV,blCV)
 
       AT,xTt,xPV = self.model_one_timestep(AT,xTt,xPV,CVscalar)
@@ -287,6 +296,9 @@ Model
                     ,(ATs,'PV',pvtitle,((xTts,'Tank Predict',)
                                        ,(rPVs,'PV Predict',)
                                        ,)
+                     ,)
+                    ,(zeroCV_ATs,'CVdots',None,(([0.0]*len(zeroCV_ATs),'CV zeroed',)
+                                              ,)
                      ,)
                     )
 
