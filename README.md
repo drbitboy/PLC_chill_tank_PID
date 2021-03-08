@@ -5,43 +5,44 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 
 # Quickstart usage
 
-    python pv_predict.py 
+    python pv_predict.py
     python pv_predict.py  --pid-Kc=50 --pid-Ti=60 --pid-Td=0 --fix-backlash --no-model-data
 
 # Results
 
-Model all pieces:  process, PID tuned per @Mispeld, valve backlash model, and anti-backlash action for modeled valve position,
+Model four of four pieces:  process; PID tuned per @Mispeld; valve position backlash; backlash compensation to ensure control valve position matches PID CV output.
 ====
 * Kc = 50
 * Ti = 60
 * Td = 0
 * Update time = 45s
 * Blue line in lower plot [CV, %] is PID CV output
-* Orange line in lower plot is modeled valve position, excluding anti-backlash action.
-* Anti-backlash post-processes PID CV by sending 0% signal (closing valve) for 2s for any decrease in whole-percentage-rounded PID CV output position
-* Anti-backlash events (i.e. valve position signal 0%=4ma when PID CV is 1% or more) are shown as green dots in lower plot [CV, %]
+* Orange line in lower plot is modeled valve position, excluding 2s intervals of backlash compensation at 0%
+* Backlash compensation post-processes PID CV by sending 0% signal (closing valve) for 2s for any decrease in whole-percentage-rounded PID CV output position
+* Backlash compensation events (i.e. valve position signal 0%=4ma when PID CV is 1% or more) are shown as green dots in lower plot
 * The point of these plots is that the @Mispeld's tuning parameters work well for this model if measures are taken to counteract valve position backlash when decreasing the PID CV signal
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/anti_backlash_pid_050_060_000.png)
 
-Model three of four pieces:  process, PID tuned as in actual results, and valve position backlash.  No anti-backlash action.
+Model three of four pieces:  process; PID tuned as it was for actual data provided by @GrizzlyC; valve position backlash.  No backlash compensation.
 ====
 * Kc = 5 (too small)
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
 * Update time = 45s
 * The point of these plots is that the process plus PID models represent the actual process with PID control reasonably well, assuming backlash is present
-* Blue line in lower plot [CV, %] is PID CV output.
-* Orange line is model of valve position, __*with backlash*__, which does not follow any decrease in PID CV output until PID CV output is 0% (4ma).
+* Blue line in lower plot [CV, %] is PID CV output
+* Orange line is model of valve position, __*with backlash*__, which does not follow any decrease in PID CV output until PID CV output is 0% (4ma)
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/backlash_model_pid_20210307.png)
 
-Model two pieces:  process and valve backlash.  No anti-backlash action, and use actual PID CV output data for signal sent from PID to position valve.
+Model two of four pieces:  process and valve position backlash.  No backlash compensation.  Use actual PID CV output data for signal sent from PID to position valve.
 ====
 * Kc = 5 (too small)
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
 * Update time = 45s
+* Blue and orange lines are again PID CV output and backlash-modeled valve position, respectively
 * The point of these plots is that the process model represents the actual process reasonably well, assuming backlash is present
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/backlash_model_data_20210307.png)
