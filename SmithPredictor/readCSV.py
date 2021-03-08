@@ -15,7 +15,8 @@ def readCSV(path):
         ch is the deliminator. It could be a comma, tab or spaces 
         The file must have a 1 line header that is ignored.
         The data must be in three columns of time, control and actual """
-    with open(path, newline='') as csvfile:
+    #with open(path, newline='') as csvfile:
+    with open(path) as csvfile:
         dialect = csv.Sniffer().sniff(csvfile.read(1024), delimiters=',\t ')
         csvfile.seek(0)
         bHdr = csv.Sniffer().has_header(csvfile.read(1024))        
@@ -45,4 +46,3 @@ if __name__ == "__main__":
         Type the arrays to verify the data is read correctly """
     path="hotrod.txt"
     aTime, aControl, aAct = readCSV(path)
-        
