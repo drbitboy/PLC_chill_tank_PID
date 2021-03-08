@@ -14,11 +14,11 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 # Results
 
 ### Model four of four pieces:  process; PID tuned per @Mispeld; valve position backlash; backlash compensation to ensure control valve position matches PID CV output.
-* The point of these plots is that @Mispeld's tuning parameters work well for this model if measures are taken to counteract valve position backlash when decreasing the PID CV signal
+* The point of these plots is that @Mispeld's tuning parameters work well for this model if measures are taken to counteract valve position backlash when decreasing the PID CV output
 * Blue line in lower plot [CV, %] is PID CV output
 * Orange line in lower plot is modeled valve position, excluding 2s intervals of backlash compensation at 0%
 * Backlash compensation post-processes PID CV by sending 0% signal (closing valve) for 2s for any decrease in whole-percentage-rounded PID CV output position
-* Backlash compensation events (i.e. valve position signal 0%=4ma when PID CV is 1% or more) are shown as green dots in lower plot
+* Backlash compensation events (i.e. send valve position signal 0%=4ma when PID CV output is 1% or more) are shown as green dots in lower plot
 * Kc = 50
 * Ti = 60
 * Td = 0
@@ -28,10 +28,10 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 
 ---
 
-### Model three of four pieces:  process; PID tuned as it was for actual data provided by @GrizzlyC; valve position backlash.  No backlash compensation.
+### Model three of four pieces:  process; PID tuned as it was for actual data provided by @GrizzlyC; valve position backlash.  No backlash compensation. __*N.B. modeled valve position will not follow decreasing signal until it is 0%=4ma*__.
 * The point of these plots is that the process plus PID models represent the actual process with PID control reasonably well, assuming backlash is present
 * Blue line in lower plot [CV, %] is PID CV output
-* Orange line is model of valve position, __*with backlash*__, which does not follow any decrease in PID CV output until PID CV output is 0% (4ma)
+* Orange line in lower plot is model of valve position, __*with backlash*__, which does not follow any decrease in PID CV output until PID CV output is 0% (4ma)
 * Kc = 5 (too small)
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
@@ -41,9 +41,9 @@ Modeling for tuning process described in PLC talk forum thread cf. https://www.p
 
 ---
 
-### Model two of four pieces:  process and valve position backlash.  No backlash compensation.  Use actual PID CV output data for signal sent from PID to position valve.
+### Model two of four pieces:  process and valve position backlash.  No backlash compensation.  Use actual PID CV output data for signal sent from PID to position valve, but __*N.B. modeled valve position will not follow decreasing signal until it is 0%=4ma*__.
 * The point of these plots is that the process model represents the actual process reasonably well, assuming backlash is present
-* Blue and orange lines are again PID CV output and backlash-modeled valve position, respectively
+* Blue and orange lines in lower plot are again PID CV output and backlash-modeled valve position, respectively
 * Kc = 5 (too small)
 * Ti = 8 (too small)
 * Td = 1.5 (not needed)
