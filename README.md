@@ -20,7 +20,7 @@ Model four of four pieces:  process; PID tuned per @Mispeld; valve position back
 * Orange line in lower plot is modeled valve position, excluding 2s intervals of backlash compensation at 0%
 * Backlash compensation post-processes PID CV by sending 0% signal (closing valve) for 2s for any decrease in whole-percentage-rounded PID CV output position
 * Backlash compensation events (i.e. valve position signal 0%=4ma when PID CV is 1% or more) are shown as green dots in lower plot
-* The point of these plots is that the @Mispeld's tuning parameters work well for this model if measures are taken to counteract valve position backlash when decreasing the PID CV signal
+* The point of these plots is that @Mispeld's tuning parameters work well for this model if measures are taken to counteract valve position backlash when decreasing the PID CV signal
 
 ![](https://github.com/drbitboy/PLC_chill_tank_PID/raw/master/images/anti_backlash_pid_050_060_000.png)
 
